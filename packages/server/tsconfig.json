@@ -1,0 +1,18 @@
+{
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "esnext",
+		"outDir": "./dist",
+		"esModuleInterop": true,
+		"sourceMap":false,
+		"allowSyntheticDefaultImports": true,
+		"moduleResolution": "node",
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"declaration": true,
+		"strict": true,
+		"forceConsistentCasingInFileNames": true,
+		"paths": {}
+	},
+	"include": ["./src", "./src/global.d.ts"]
+}
