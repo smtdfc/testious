@@ -1,3 +1,6 @@
+import { deepStrictEqual } from 'assert';
+
+
 export class TestiousAssertion {
   constructor(public value: any, public isNegate: boolean = false) {}
   
@@ -148,6 +151,112 @@ export class TestiousAssertion {
     }
     return this;
   }
+  
+  toHaveProperty(path: string, expectedValue ? : any): this {
+    const keys = path.split(".");
+    let current = this.value;
+    for (const key of keys) {
+      if (current == null || !(key in current)) {
+        if (!this.isNegate) {
+          this.fail(`Expected object to have property '${path}', but it was not found`);
+        } else return this;
+      }
+      current = current[key];
+    }
+    
+    if (arguments.length === 2) {
+      const pass = current === expectedValue;
+      if (pass === this.isNegate) {
+        this.fail(`Expected property '${path}' ${this.isNegate ? "not " : ""}to be ${expectedValue}, got ${current}`);
+      }
+    }
+    
+    if (this.isNegate && arguments.length === 1) {
+      this.fail(`Expected object not to have property '${path}', but it exists`);
+    }
+    
+    return this;
+  }
+  
+  
+  toStrictEqual(val: any): this {
+    let pass = true;
+    try {
+      deepStrictEqual(this.value, val);
+    } catch {
+      pass = false;
+    }
+    
+    if (pass === this.isNegate) {
+      this.fail(`Expected value ${this.isNegate ? "not " : ""}to strictly equal ${JSON.stringify(val)}`);
+    }
+    
+    return this;
+  }
+  
+  toBeObject(): this {
+    const pass = typeof this.value === "object" && this.value !== null && !Array.isArray(this.value);
+    if (pass === this.isNegate) {
+      this.fail(`Expected value ${this.isNegate ? "not " : ""}to be a plain object`);
+    }
+    return this;
+  }
+  
+  toHaveKeys(keys: string[]): this {
+    if (typeof this.value !== "object" || this.value === null) {
+      this.fail("Expected an object to check keys");
+    }
+    
+    const actualKeys = Object.keys(this.value);
+    const missing = keys.filter(k => !actualKeys.includes(k));
+    const pass = missing.length === 0;
+    
+    if (pass === this.isNegate) {
+      this.fail(`Expected object ${this.isNegate ? "not " : ""}to have keys ${keys.join(", ")}`);
+    }
+    
+    return this;
+  }
+  
+  toMatchObject(partial: object): this {
+    const isMatch = (a: any, b: any): boolean => {
+      if (typeof a !== "object" || a === null) return false;
+      for (const key in b) {
+        if (!(key in a)) return false;
+        const valA = a[key];
+        const valB = b[key];
+        if (typeof valB === "object" && valB !== null) {
+          if (!isMatch(valA, valB)) return false;
+        } else {
+          if (valA !== valB) return false;
+        }
+      }
+      return true;
+    };
+    
+    const pass = isMatch(this.value, partial);
+    if (pass === this.isNegate) {
+      this.fail(`Expected object ${this.isNegate ? "not " : ""}to match partial ${JSON.stringify(partial)}`);
+    }
+    return this;
+  }
+  
+  toSatisfy(predicate: (val: any) => boolean): this {
+    const pass = predicate(this.value);
+    if (pass === this.isNegate) {
+      this.fail(`Expected value ${this.isNegate ? "not " : ""}to satisfy given predicate`);
+    }
+    return this;
+  }
+  
+  toBeFunction(): this {
+    const pass = typeof this.value === "function";
+    if (pass === this.isNegate) {
+      this.fail(`Expected value ${this.isNegate ? "not " : ""}to be a function`);
+    }
+    return this;
+  }
+  
 }
 
 export function expect(val: any) {
