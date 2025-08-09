@@ -51,16 +51,17 @@ export class NodeRunner {
   static totalSuccess = 0;
   static totalFail = 0;
 
-  private static runCase(testCase: TestCase, report: TestReport) {
+  private static async runCase(testCase: TestCase, report: TestReport) {
     let start = performance.now();
     let success = false;
     let error: Error | null = null;
 
     try {
-      testCase.fn();
+      await testCase.fn();
       success = true;
     } catch (e: any) {
       error = e as Error;
+      console.error(e);
       success = false;
     }
 
@@ -73,14 +74,14 @@ export class NodeRunner {
     });
   }
 
-  static run(groups: TestGroup[]) {
+  static async run(groups: TestGroup[]) {
     let start = performance.now();
     for (let i = 0; i < groups.length; i++) {
       let cases = groups[i].cases;
       let report = new TestReport(groups[i]);
       report.markStart();
       for (let j = 0; j < cases.length; j++) {
-        this.runCase(cases[j], report);
+        await this.runCase(cases[j], report);
       }
       report.markEnd();
       report.show();

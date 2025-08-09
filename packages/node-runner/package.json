@@ -1,7 +1,7 @@
 {
   "name": "testious-node-runner",
-  "version": "0.0.1",
-  "description": "Node runner for testious framework",
+  "version": "0.0.3",
+  "description": "A Node.js test runner for the Testious framework, facilitating efficient test execution and management within Node.js environments.",
   "license": "MIT",
   "author": "smtdfc <me.smtdfc@gmail.com>",
   "type": "module",
