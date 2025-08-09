@@ -9,17 +9,13 @@ export default {
     file: './dist/index.js',
     format: 'esm',
     sourcemap: false,
-    paths: {
-      'rumious-compiler': !isProduction ?
-        '../compiler/dist/index.js' :
-        'rumious-compiler'
-    }
+    paths: {},
   },
   plugins: [
     typescript({
       tsconfig: './tsconfig.json',
       include: ['src/**/*.ts'],
-      exclude: ['node_modules', 'dist']
-    })
-  ]
+      exclude: ['node_modules', 'dist'],
+    }),
+  ],
 };
