@@ -1,0 +1,51 @@
+{
+  "name": "testious-node-runner",
+  "version": "0.0.1",
+  "description": "Node runner for testious framework",
+  "license": "MIT",
+  "author": "smtdfc <me.smtdfc@gmail.com>",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist/",
+    "data/",
+    "lib/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build:prod": "NODE_ENV=production rollup -c",
+    "build:dev": "NODE_ENV=development rollup -c",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "cp ../../LICENSE . && npm run clean && npm run build:prod"
+  },
+  "keywords": [
+    "framework",
+    "testious",
+    "testing",
+    "node",
+    "runner"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smtdfc/testious.git"
+  },
+  "bugs": {
+    "url": "https://github.com/smtdfc/testious/issues"
+  },
+  "homepage": "https://github.com/smtdfc/testious/tree/main/packages/node-runner#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": false
+}
