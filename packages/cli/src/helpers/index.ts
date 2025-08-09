@@ -64,3 +64,69 @@ export function readFile(path: string) {
     throw err;
   }
 }
+
+type TestCaseResultDetail = {
+  time: number;
+  status: 'success' | 'failed';
+  error: Error | null;
+};
+
+type TestCase = {
+  description: string;
+};
+
+type TestGroup = {
+  description: string;
+  cases: TestCase[];
+  beforeEachFns: any[];
+  afterEachFns: any[];
+};
+
+type TestGroupReport = {
+  group: TestGroup;
+  cases: TestCaseResultDetail[];
+  start: number;
+  end: number;
+  time: number;
+};
+
+export type FullReport = {
+  reports: TestGroupReport[];
+  time: number;
+};
+
+export class TestReportPrinter {
+  constructor(private report: FullReport) {}
+
+  show() {
+    for (const groupReport of this.report.reports) {
+      const group = groupReport.group;
+      const casesResult = groupReport.cases;
+
+      console.log(`Test Group: ${group.description}`);
+      console.log(`Total Cases: ${casesResult.length}`);
+
+      const successCount = casesResult.filter(
+        (c) => c.status === 'success',
+      ).length;
+      const failedCount = casesResult.length - successCount;
+      console.log(`Success: ${successCount} | Failed: ${failedCount}`);
+
+      console.log(`Total Time: ${groupReport.time.toFixed(2)} ms`);
+      console.log('Details:');
+
+      casesResult.forEach((c, i) => {
+        const statusEmoji = c.status === 'success' ? '✅' : '❌';
+        console.log(
+          `  Case #${i + 1}: ${statusEmoji} Time: ${c.time.toFixed(2)} ms`,
+        );
+        if (c.error) {
+          console.log(`    Error:`);
+          console.error(c.error);
+        }
+      });
+
+      console.log('');
+    }
+  }
+}

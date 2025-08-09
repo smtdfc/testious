@@ -1,7 +1,7 @@
 {
   "name": "testious-cli",
-  "version": "0.0.1",
-  "description": "A CLI for Testious Framework.",
+  "version": "0.0.5",
+  "description": "Command-line interface for the Testious testing framework, providing efficient test execution, management, and integration capabilities.",
   "license": "MIT",
   "author": "smtdfc <me.smtdfc@gmail.com>",
   "type": "module",

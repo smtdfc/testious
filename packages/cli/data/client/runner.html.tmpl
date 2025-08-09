@@ -1,14 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Testious | Client Test</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Testious | Client Test Runner</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 2rem;
+      background-color: #f8f9fa;
+      color: #222;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+  
+    #console {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: monospace;
+      height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+  </style>
 </head>
 
 <body>
-  <script>{{source}}</script>
+  <h1>Testious Browser Runner</h1>
+  <div id="console"></div>
+  <script type="module">
+    // Fake console to show logs in #console div
+    const consoleDiv = document.getElementById('console');
+
+    const origConsoleLog = console.log;
+    console.log = (...args) => {
+      origConsoleLog(...args);
+      const message = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : a)).join(' ');
+      const line = document.createElement('div');
+      line.textContent = message;
+      consoleDiv.appendChild(line);
+      consoleDiv.scrollTop = consoleDiv.scrollHeight;
+    };
+
+    // ==== Test ====
+    {{source}}
+    // ============================
+
+  </script>
 </body>
 
 </html>
