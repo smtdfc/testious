@@ -1,264 +1,218 @@
-import { deepStrictEqual } from 'assert';
+export type MatcherFunction = (
+  this: Assertion,
+  ...args: any[]
+) => void | Promise<void>;
+export class Assertion {
+  private static customMatchers: Record<string, MatcherFunction> = {};
 
+  constructor(public value: any) {}
 
-export class TestiousAssertion {
-  constructor(public value: any, public isNegate: boolean = false) {}
-  
-  private fail(message: string) {
-    throw new Error(message);
-  }
-  
-  get not(): TestiousAssertion {
-    return new TestiousAssertion(this.value, !this.isNegate);
-  }
-  
-  toBe(val: any): this {
-    const pass = this.value === val;
-    if (pass === this.isNegate) {
-      this.fail(`Expected ${this.value} ${this.isNegate ? "not " : ""}to be ${val}`);
+  toBe(expected: any) {
+    if (this.value !== expected) {
+      throw new Error(`Expected ${this.value} to be ${expected}`);
     }
-    return this;
   }
-  
-  toEqual(val: any): this {
-    const pass = JSON.stringify(this.value) === JSON.stringify(val);
-    if (pass === this.isNegate) {
-      this.fail(`Expected ${JSON.stringify(this.value)} ${this.isNegate ? "not " : ""}to equal ${JSON.stringify(val)}`);
+
+  toEqual(expected: any) {
+    const isEqual = JSON.stringify(this.value) === JSON.stringify(expected);
+    if (!isEqual) {
+      throw new Error(
+        `Expected ${JSON.stringify(this.value)} to equal ${JSON.stringify(expected)}`,
+      );
     }
-    return this;
   }
-  
-  toBeTruthy(): this {
-    const pass = !!this.value;
-    if (pass === this.isNegate) {
-      this.fail(`Expected value ${this.isNegate ? "not " : ""}to be truthy`);
+
+  toBeTruthy() {
+    if (!this.value) {
+      throw new Error(`Expected ${this.value} to be truthy`);
     }
-    return this;
   }
-  
-  toBeFalsy(): this {
-    const pass = !this.value;
-    if (pass === this.isNegate) {
-      this.fail(`Expected value ${this.isNegate ? "not " : ""}to be falsy`);
+
+  toBeFalsy() {
+    if (this.value) {
+      throw new Error(`Expected ${this.value} to be falsy`);
     }
-    return this;
   }
-  
-  toThrow(): this {
+
+  toBeNull() {
+    if (this.value !== null) {
+      throw new Error(`Expected ${this.value} to be null`);
+    }
+  }
+
+  toBeUndefined() {
+    if (this.value !== undefined) {
+      throw new Error(`Expected ${this.value} to be undefined`);
+    }
+  }
+
+  toBeDefined() {
+    if (this.value === undefined) {
+      throw new Error(`Expected value to be defined, but received undefined`);
+    }
+  }
+
+  toContain(expected: any) {
+    if (typeof this.value === 'string' || Array.isArray(this.value)) {
+      if (!this.value.includes(expected)) {
+        throw new Error(
+          `Expected ${JSON.stringify(this.value)} to contain ${expected}`,
+        );
+      }
+    } else {
+      throw new Error(`toContain works only on strings or arrays`);
+    }
+  }
+
+  toHaveLength(expectedLength: number) {
+    if (typeof this.value !== 'string' && !Array.isArray(this.value)) {
+      throw new Error(`toHaveLength works only on strings or arrays`);
+    }
+    if (this.value.length !== expectedLength) {
+      throw new Error(
+        `Expected length ${expectedLength}, but got ${this.value.length}`,
+      );
+    }
+  }
+
+  toHaveProperty(propertyPath: string, expectedValue?: any) {
+    const parts = propertyPath.split('.');
+    let val = this.value;
+    for (const part of parts) {
+      if (val == null || !(part in val)) {
+        throw new Error(`Expected property "${propertyPath}" to exist`);
+      }
+      val = val[part];
+    }
+    if (arguments.length === 2 && val !== expectedValue) {
+      throw new Error(
+        `Expected property "${propertyPath}" to be ${expectedValue}, but got ${val}`,
+      );
+    }
+  }
+
+  toBeInstanceOf(expectedClass: any) {
+    if (!(this.value instanceof expectedClass)) {
+      throw new Error(
+        `Expected object to be instance of ${expectedClass.name}`,
+      );
+    }
+  }
+
+  toMatchObject(expected: object) {
+    if (typeof this.value !== 'object' || this.value == null) {
+      throw new Error(`toMatchObject works only on non-null objects`);
+    }
+    const valObj = this.value as {
+      [key: string]: any;
+    };
+    const expObj = expected as {
+      [key: string]: any;
+    };
+
+    for (const key in expected) {
+      if (
+        !(key in valObj) ||
+        JSON.stringify(valObj[key]) !== JSON.stringify(expObj[key])
+      ) {
+        throw new Error(
+          `Expected property ${key} to match ${JSON.stringify(expObj[key])}, but got ${JSON.stringify(valObj[key])}`,
+        );
+      }
+    }
+  }
+
+  toBeGreaterThan(expected: number) {
+    if (!(this.value > expected)) {
+      throw new Error(`Expected ${this.value} to be greater than ${expected}`);
+    }
+  }
+
+  toBeLessThan(expected: number) {
+    if (!(this.value < expected)) {
+      throw new Error(`Expected ${this.value} to be less than ${expected}`);
+    }
+  }
+
+  toBeCloseTo(expected: number, precision = 2) {
+    if (typeof this.value !== 'number' || typeof expected !== 'number') {
+      throw new Error(`toBeCloseTo works only on numbers`);
+    }
+    const factor = Math.pow(10, precision);
+    if (Math.round(this.value * factor) !== Math.round(expected * factor)) {
+      throw new Error(
+        `Expected ${this.value} to be close to ${expected} with precision ${precision}`,
+      );
+    }
+  }
+
+  toThrow(expectedMessage?: string) {
     if (typeof this.value !== 'function') {
-      this.fail(`Expected value to be a function`);
+      throw new Error('toThrow expects a function');
     }
-    let threw = false;
     try {
       this.value();
-    } catch {
-      threw = true;
-    }
-    if (threw === this.isNegate) {
-      this.fail(`Expected function ${this.isNegate ? "not " : ""}to throw`);
-    }
-    return this;
-  }
-  
-  toBeNull(): this {
-    const pass = this.value === null;
-    if (pass === this.isNegate) {
-      this.fail(`Expected value ${this.isNegate ? "not " : ""}to be null`);
-    }
-    return this;
-  }
-  
-  toBeUndefined(): this {
-    const pass = this.value === undefined;
-    if (pass === this.isNegate) {
-      this.fail(`Expected value ${this.isNegate ? "not " : ""}to be undefined`);
-    }
-    return this;
-  }
-  
-  toBeDefined(): this {
-    const pass = this.value !== undefined;
-    if (pass === this.isNegate) {
-      this.fail(`Expected value ${this.isNegate ? "not " : ""}to be defined`);
-    }
-    return this;
-  }
-  
-  toBeGreaterThan(val: number): this {
-    const pass = this.value > val;
-    if (pass === this.isNegate) {
-      this.fail(`Expected ${this.value} ${this.isNegate ? "not " : ""}to be > ${val}`);
-    }
-    return this;
-  }
-  
-  toBeGreaterThanOrEqual(val: number): this {
-    const pass = this.value >= val;
-    if (pass === this.isNegate) {
-      this.fail(`Expected ${this.value} ${this.isNegate ? "not " : ""}to be >= ${val}`);
-    }
-    return this;
-  }
-  
-  toBeLessThan(val: number): this {
-    const pass = this.value < val;
-    if (pass === this.isNegate) {
-      this.fail(`Expected ${this.value} ${this.isNegate ? "not " : ""}to be < ${val}`);
-    }
-    return this;
-  }
-  
-  toBeLessThanOrEqual(val: number): this {
-    const pass = this.value <= val;
-    if (pass === this.isNegate) {
-      this.fail(`Expected ${this.value} ${this.isNegate ? "not " : ""}to be <= ${val}`);
-    }
-    return this;
-  }
-  
-  toContain(item: any): this {
-    const pass = Array.isArray(this.value) || typeof this.value === 'string' ?
-      this.value.includes(item) :
-      false;
-    if (pass === this.isNegate) {
-      this.fail(`Expected ${JSON.stringify(this.value)} ${this.isNegate ? "not " : ""}to contain ${item}`);
-    }
-    return this;
-  }
-  
-  toMatch(matcher: string | RegExp): this {
-    const pass = typeof this.value === 'string' &&
-      (typeof matcher === 'string' ? this.value.includes(matcher) : matcher.test(this.value));
-    if (pass === this.isNegate) {
-      this.fail(`Expected string ${this.isNegate ? "not " : ""}to match ${matcher}`);
-    }
-    return this;
-  }
-  
-  toHaveLength(len: number): this {
-    const actual = this.value?.length;
-    const pass = typeof actual === 'number' && actual === len;
-    if (pass === this.isNegate) {
-      this.fail(`Expected length ${this.isNegate ? "not " : ""}to be ${len}, got ${actual}`);
-    }
-    return this;
-  }
-  
-  toBeInstanceOf(cls: any): this {
-    const pass = this.value instanceof cls;
-    if (pass === this.isNegate) {
-      this.fail(`Expected value ${this.isNegate ? "not " : ""}to be instance of ${cls.name}`);
-    }
-    return this;
-  }
-  
-  toHaveProperty(path: string, expectedValue ? : any): this {
-    const keys = path.split(".");
-    let current = this.value;
-    for (const key of keys) {
-      if (current == null || !(key in current)) {
-        if (!this.isNegate) {
-          this.fail(`Expected object to have property '${path}', but it was not found`);
-        } else return this;
+    } catch (error: any) {
+      if (expectedMessage && !error.message.includes(expectedMessage)) {
+        throw new Error(
+          `Expected error message to include "${expectedMessage}", but got "${error.message}"`,
+        );
       }
-      current = current[key];
+      return; // success
     }
-    
-    if (arguments.length === 2) {
-      const pass = current === expectedValue;
-      if (pass === this.isNegate) {
-        this.fail(`Expected property '${path}' ${this.isNegate ? "not " : ""}to be ${expectedValue}, got ${current}`);
-      }
-    }
-    
-    if (this.isNegate && arguments.length === 1) {
-      this.fail(`Expected object not to have property '${path}', but it exists`);
-    }
-    
-    return this;
+    throw new Error('Expected function to throw an error');
   }
-  
-  
-  toStrictEqual(val: any): this {
-    let pass = true;
+
+  async toThrowAsync(expectedMessage?: string) {
+    if (typeof this.value !== 'function') {
+      throw new Error('toThrowAsync expects a function');
+    }
     try {
-      deepStrictEqual(this.value, val);
-    } catch {
-      pass = false;
-    }
-    
-    if (pass === this.isNegate) {
-      this.fail(`Expected value ${this.isNegate ? "not " : ""}to strictly equal ${JSON.stringify(val)}`);
-    }
-    
-    return this;
-  }
-  
-  toBeObject(): this {
-    const pass = typeof this.value === "object" && this.value !== null && !Array.isArray(this.value);
-    if (pass === this.isNegate) {
-      this.fail(`Expected value ${this.isNegate ? "not " : ""}to be a plain object`);
-    }
-    return this;
-  }
-  
-  toHaveKeys(keys: string[]): this {
-    if (typeof this.value !== "object" || this.value === null) {
-      this.fail("Expected an object to check keys");
-    }
-    
-    const actualKeys = Object.keys(this.value);
-    const missing = keys.filter(k => !actualKeys.includes(k));
-    const pass = missing.length === 0;
-    
-    if (pass === this.isNegate) {
-      this.fail(`Expected object ${this.isNegate ? "not " : ""}to have keys ${keys.join(", ")}`);
-    }
-    
-    return this;
-  }
-  
-  toMatchObject(partial: object): this {
-    const isMatch = (a: any, b: any): boolean => {
-      if (typeof a !== "object" || a === null) return false;
-      for (const key in b) {
-        if (!(key in a)) return false;
-        const valA = a[key];
-        const valB = b[key];
-        if (typeof valB === "object" && valB !== null) {
-          if (!isMatch(valA, valB)) return false;
-        } else {
-          if (valA !== valB) return false;
-        }
+      await this.value();
+    } catch (error: any) {
+      if (expectedMessage && !error.message.includes(expectedMessage)) {
+        throw new Error(
+          `Expected async error message to include "${expectedMessage}", but got "${error.message}"`,
+        );
       }
-      return true;
+      return;
+    }
+    throw new Error('Expected async function to throw an error');
+  }
+
+  toHaveKey(key: string) {
+    if (typeof this.value !== 'object' || this.value === null) {
+      throw new Error(`toHaveKey works only on non-null objects`);
+    }
+    if (!(key in this.value)) {
+      throw new Error(`Expected object to have key "${key}"`);
+    }
+  }
+
+  private runCustomMatcher(name: string, args: any[]) {
+    const matcher = Assertion.customMatchers[name];
+    if (!matcher) {
+      throw new Error(`No custom matcher registered with name "${name}"`);
+    }
+    return matcher.apply(this, args);
+  }
+
+  [key: string]: any;
+
+  static addMatcher(name: string, fn: MatcherFunction) {
+    if (name in Assertion.prototype) {
+      throw new Error(`Cannot override existing method "${name}"`);
+    }
+    if (name in Assertion.customMatchers) {
+      throw new Error(`Matcher "${name}" already exists`);
+    }
+    Assertion.customMatchers[name] = fn;
+    (Assertion.prototype as any)[name] = function (...args: any[]) {
+      return fn.apply(this, args);
     };
-    
-    const pass = isMatch(this.value, partial);
-    if (pass === this.isNegate) {
-      this.fail(`Expected object ${this.isNegate ? "not " : ""}to match partial ${JSON.stringify(partial)}`);
-    }
-    return this;
   }
-  
-  toSatisfy(predicate: (val: any) => boolean): this {
-    const pass = predicate(this.value);
-    if (pass === this.isNegate) {
-      this.fail(`Expected value ${this.isNegate ? "not " : ""}to satisfy given predicate`);
-    }
-    return this;
-  }
-  
-  toBeFunction(): this {
-    const pass = typeof this.value === "function";
-    if (pass === this.isNegate) {
-      this.fail(`Expected value ${this.isNegate ? "not " : ""}to be a function`);
-    }
-    return this;
-  }
-  
 }
 
-export function expect(val: any) {
-  return new TestiousAssertion(val);
+export function expect(value: any): Assertion {
+  return new Assertion(value);
 }

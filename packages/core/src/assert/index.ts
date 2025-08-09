@@ -1,1 +1,1 @@
-export * from "./assert.js";
+export * from './assert.js';
