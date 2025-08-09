@@ -1,7 +1,7 @@
 {
   "name": "testious-browser-runner",
-  "version": "0.0.1",
-  "description": "Browser runner for testious framework",
+  "version": "0.0.3",
+  "description": "A browser-based test runner for the Testious framework, enabling seamless execution and management of tests directly in web environments.",
   "license": "MIT",
   "author": "smtdfc <me.smtdfc@gmail.com>",
   "type": "module",

@@ -50,13 +50,13 @@ export class BrowserRunner {
   static totalSuccess = 0;
   static totalFail = 0;
 
-  private static runCase(testCase: TestCase, report: TestReport) {
+  private static async runCase(testCase: TestCase, report: TestReport) {
     let start = performance.now();
     let success = false;
     let error: Error | null = null;
 
     try {
-      testCase.fn();
+      await testCase.fn();
       success = true;
     } catch (e: any) {
       error = e as Error;
@@ -72,20 +72,33 @@ export class BrowserRunner {
     });
   }
 
-  static run(groups: TestGroup[]) {
+  static async run(groups: TestGroup[]) {
+    let reports: TestReport[] = [];
     let start = performance.now();
     for (let i = 0; i < groups.length; i++) {
       let cases = groups[i].cases;
       let report = new TestReport(groups[i]);
       report.markStart();
       for (let j = 0; j < cases.length; j++) {
-        this.runCase(cases[j], report);
+        await this.runCase(cases[j], report);
       }
       report.markEnd();
       report.show();
+      reports.push(report);
     }
     let end = performance.now();
     let time = end - start;
-    console.log(`All test run in ${time}ms`);
+    console.log(`[Browser Runner]: All test run in ${time}ms`);
+    await fetch(`./`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        reports,
+        time,
+      }),
+    });
+    console.log(`[Browser Runner]: Report sent `);
   }
 }
