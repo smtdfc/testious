@@ -1,7 +1,7 @@
 {
   "name": "testious",
-  "version": "1.0.0",
-  "description": "Simple testing framework",
+  "version": "1.0.1",
+  "description": "A simple and extensible testing framework designed to provide a clean and efficient way to write and run tests.",
   "license": "MIT",
   "author": "smtdfc <me.smtdfc@gmail.com>",
   "type": "module",
@@ -27,7 +27,7 @@
     "build:prod": "NODE_ENV=production rollup -c",
     "build:dev": "NODE_ENV=development rollup -c",
     "clean": "rm -rf dist",
-    "prepublishOnly": "cp ../../LICENSE . && npm run clean && npm run build:prod"
+    "prepublishOnly": "cp ../../LICENSE . && cp ../../README.md . && npm run clean && npm run build:prod"
   },
   "keywords": [
     "framework",

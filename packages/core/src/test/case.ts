@@ -3,8 +3,8 @@ export class TestCase {
     public description: string,
     public fn: () => unknown,
   ) {}
-  
-  run(){
-    this.fn()
+
+  run() {
+    this.fn();
   }
 }
