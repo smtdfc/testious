@@ -3,7 +3,6 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
-import { rollup } from 'rollup';
 import {
   TestReportPrinter,
   FullReport,
@@ -13,8 +12,6 @@ import {
   readFile,
 } from '../helpers/index.js';
 import { Config } from '../types/index.js';
-import resolvePlugin from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
 import http from 'http';
 import open from 'open';
 
@@ -23,22 +20,22 @@ const __dirname = dirname(__filename);
 const cwd = process.cwd();
 
 interface RunOptions {
-  bundle?: boolean;
-  browser?: boolean;
+  bundle ? : boolean;
+  browser ? : boolean;
 }
 
 function runCommand(
   cmd: string,
   args: string[] = [],
-  options: { cwd?: string } = {},
-): Promise<void> {
+  options: { cwd ? : string } = {},
+): Promise < void > {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args, {
       stdio: 'inherit',
       shell: true,
       ...options,
     });
-
+    
     child.on('close', (code) => {
       if (code === 0) resolve();
       else reject(0);
@@ -57,95 +54,61 @@ async function createBrowserBundle(config: Config) {
     .replace(/\\/g, '/');
   fs.writeFileSync(
     browserTempEntry,
-    `
-      import "${entryPath}";
+    `${ config.browserTestEntry ? `import "${entryPath}";` : ""}
       import { allGroup } from 'testious';
       import { BrowserRunner } from 'testious-browser-runner';
       function runTest() {
         BrowserRunner.run(allGroup());
       }
       runTest();
-    `,
+    `.split('\n').map(line => line.trimStart()).join('\n'),
   );
-
-  const browserBundle = await rollup({
-    input: browserTempEntry,
-    external: [],
-    plugins: [resolvePlugin(), commonjs()],
-  });
-
-  await browserBundle.write({
-    dir: path.join(cwd, 'dist/browser'),
-    entryFileNames: 'runner.js',
-    format: 'iife',
-    paths: {},
-    inlineDynamicImports: true,
-  });
-
-  await browserBundle.close();
 }
 
 async function createNodeBundle(config: Config) {
   const nodeTempEntry = resolve(path.join(cwd, '.testious/node.js'));
   fs.mkdirSync(path.dirname(nodeTempEntry), { recursive: true });
-
+  
   const entryPath = path
     .relative(
       path.join(cwd, '.testious'),
       path.join(cwd, config.nodeTestEntry ?? 'node'),
     )
     .replace(/\\/g, '/');
+  
   fs.writeFileSync(
     nodeTempEntry,
-    `
-      import "${entryPath}";
+    `${config.nodeTestEntry ? `import "${entryPath}";` : ""}
       import { allGroup } from 'testious';
       import { NodeRunner } from 'testious-node-runner';
       function runTest() {
         NodeRunner.run(allGroup());
       }
       runTest();
-    `,
+    `.split('\n').map(line => line.trimStart()).join('\n')
   );
-
-  const nodeBundle = await rollup({
-    input: nodeTempEntry,
-    external: ['testious', 'testious-node-runner'],
-    plugins: [resolvePlugin(), commonjs()],
-  });
-
-  await nodeBundle.write({
-    dir: path.join(cwd, 'dist/node'),
-    entryFileNames: 'runner.js',
-    chunkFileNames: 'chunks/[name].js',
-    format: 'esm',
-    paths: {},
-  });
-
-  await nodeBundle.close();
+  
 }
 
-export async function run(options: RunOptions): Promise<void> {
+export async function run(options: RunOptions): Promise < void > {
   console.log('[Testious CLI]: Running test ...');
-  const config = readJSON<Config>(path.join(cwd, './testious.config.json'));
-
-  let nodeBundleDist = path.join(cwd, 'dist/node/runner.js');
-  let browserBundleDist = path.join(cwd, 'dist/browser/runner.js');
-
+  const config = readJSON < Config > (path.join(cwd, './testious.config.json'));
+  
+  let nodeBundleDist = path.join(cwd, '.testious/dist/node.runner.js');
+  let browserBundleDist = path.join(cwd, '.testious/dist/browser.runner.js');
+  
   if (options.bundle) {
     console.log('[Testious CLI]: Preparing assets ...');
-    if (config.browserTestEntry) {
-      await createBrowserBundle(config);
-    }
-
-    if (config.nodeTestEntry) {
-      await createNodeBundle(config);
-    }
+    await createBrowserBundle(config);
+    await createNodeBundle(config);
+    await runCommand(`rollup -c`, [], {
+      cwd: path.join(cwd, '.'),
+    });
   }
-
+  
   console.clear();
   console.log('[Testious CLI]: Testing ...');
-
+  
   try {
     console.log('[Testious CLI]: Running Node-runner ...');
     await runCommand(`node ${nodeBundleDist}`, [], {
@@ -154,7 +117,7 @@ export async function run(options: RunOptions): Promise<void> {
   } catch (error: any) {
     console.error(`[Testious CLI] Error when running test`);
   }
-
+  
   if (options.browser) {
     console.log('\n[Testious CLI]: Running Browser-runner...');
     const source = readFile(browserBundleDist);
@@ -173,16 +136,15 @@ export async function run(options: RunOptions): Promise<void> {
         });
         return;
       }
-
+      
       res.writeHead(200, { 'Content-Type': 'text/html' });
       res.end(
         renderTemplateFromFile(
-          path.join(__dirname, '../data/client/runner.html.tmpl'),
-          { source },
+          path.join(__dirname, '../data/client/runner.html.tmpl'), { source },
         ),
       );
     });
-
+    
     server.listen(3030, () => {
       console.log(
         '[Testious CLI]: Client test running in http://localhost:3030',

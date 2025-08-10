@@ -25,7 +25,7 @@ export function init(options: any) {
   if (options.install) {
     console.log(`[Testious CLI]: Installing ...`);
 
-    spawn('npm', ['i', '-D', 'testious', 'webpack'], {
+    spawn('npm', ['i', '-D', 'testious', 'rollup','@rollup/plugin-commonjs','@rollup/plugin-node-resolve'], {
       stdio: 'inherit',
       shell: true,
     });
