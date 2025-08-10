@@ -5,6 +5,7 @@ export interface TestCaseResultDetail {
   time: number;
   status: 'success' | 'failed';
   error: Error | null;
+  target:TestCase;
 }
 
 export class TestReport {
@@ -35,9 +36,8 @@ export class TestReport {
     console.log(`Total Time: ${this.time.toFixed(2)} ms`);
     console.log('Details:');
     this.cases.forEach((c, i) => {
-      const statusEmoji = c.status === 'success' ? '✅' : '❌';
       console.log(
-        `  Case #${i + 1}: ${statusEmoji} Time: ${c.time.toFixed(2)} ms`,
+        `  Case #${i + 1}:${c.target.description} -> ${status.toUpperCase()} (Time: ${c.time.toFixed(2)} ms)`,
       );
       if (c.error) {
         console.log(`    Error:`);
@@ -71,6 +71,7 @@ export class NodeRunner {
       time,
       status: success ? 'success' : 'failed',
       error,
+      target:testCase,
     });
   }
 
@@ -88,6 +89,6 @@ export class NodeRunner {
     }
     let end = performance.now();
     let time = end - start;
-    console.log(`All test run in ${time}ms`);
+    console.log(`All test run in ${time.toFixed(2)}ms`);
   }
 }
