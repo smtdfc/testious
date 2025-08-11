@@ -1,15 +1,15 @@
 import { TestGroup, TestCase } from 'testious';
 
-export interface TestError{
-  message:string;
-  stack?:string;
+export interface TestError {
+  message: string;
+  stack ? : string;
 }
 
 export interface TestCaseResultDetail {
   time: number;
   status: 'success' | 'failed';
   error: TestError | null;
-  target:TestCase;
+  target: TestCase;
 }
 
 export class TestReport {
@@ -17,18 +17,18 @@ export class TestReport {
   private start: number = 0;
   private end: number = 0;
   public time: number = 0;
-
+  
   constructor(public group: TestGroup) {}
-
+  
   markStart() {
     this.start = performance.now();
   }
-
+  
   markEnd() {
     this.end = performance.now();
     this.time = this.end - this.start;
   }
-
+  
   show() {
     console.log(`Test Group: ${this.group.description}`);
     console.log(`Total Cases: ${this.cases.length}`);
@@ -41,11 +41,11 @@ export class TestReport {
     console.log('Details:');
     this.cases.forEach((c, i) => {
       console.log(
-        `  Case #${i + 1}:${c.target.description} -> ${status.toUpperCase()} (Time: ${c.time.toFixed(2)} ms)`,
+        `  Case #${i + 1}: ${c.target.description} -> ${status.toUpperCase()} (Time: ${c.time.toFixed(2)} ms)`,
       );
       if (c.error) {
         console.log(`    Error:`);
-        console.error(c.error.message+`\n`+c.error.stack);
+        console.error(c.error.message + `\n` + c.error.stack);
       }
     });
   }
@@ -54,12 +54,12 @@ export class TestReport {
 export class BrowserRunner {
   static totalSuccess = 0;
   static totalFail = 0;
-
+  
   private static async runCase(testCase: TestCase, report: TestReport) {
     let start = performance.now();
     let success = false;
     let error: Error | null = null;
-
+    
     try {
       await testCase.fn();
       success = true;
@@ -67,20 +67,20 @@ export class BrowserRunner {
       error = e as Error;
       success = false;
     }
-
+    
     let end = performance.now();
     let time = end - start;
     report.cases.push({
       time,
       status: success ? 'success' : 'failed',
-      error:{
-        message:error?.message ?? "Unknown Error",
-        stack:error?.stack ?? "{}"
+      error: error && {
+        message: error?.message ?? "Unknown Error",
+        stack: error?.stack ?? "{}"
       },
-      target:testCase,
+      target: testCase,
     });
   }
-
+  
   static async run(groups: TestGroup[]) {
     let reports: TestReport[] = [];
     let start = performance.now();
