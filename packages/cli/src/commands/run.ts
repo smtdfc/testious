@@ -20,22 +20,22 @@ const __dirname = dirname(__filename);
 const cwd = process.cwd();
 
 interface RunOptions {
-  bundle ? : boolean;
-  browser ? : boolean;
+  bundle?: boolean;
+  browser?: boolean;
 }
 
 function runCommand(
   cmd: string,
   args: string[] = [],
-  options: { cwd ? : string } = {},
-): Promise < void > {
+  options: { cwd?: string } = {},
+): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args, {
       stdio: 'inherit',
       shell: true,
       ...options,
     });
-    
+
     child.on('close', (code) => {
       if (code === 0) resolve();
       else reject(0);
@@ -54,49 +54,61 @@ async function createBrowserBundle(config: Config) {
     .replace(/\\/g, '/');
   fs.writeFileSync(
     browserTempEntry,
-    `${ config.browserTestEntry ? `import "${entryPath}";` : ""}
+    `${config.browserTestEntry ? `import "${entryPath}";` : ''}
       import { allGroup } from 'testious';
       import { BrowserRunner } from 'testious-browser-runner';
       function runTest() {
         BrowserRunner.run(allGroup());
       }
       runTest();
-    `.split('\n').map(line => line.trimStart()).join('\n'),
+    `
+      .split('\n')
+      .map((line) => line.trimStart())
+      .join('\n'),
   );
 }
 
 async function createNodeBundle(config: Config) {
   const nodeTempEntry = resolve(path.join(cwd, '.testious/node.js'));
   fs.mkdirSync(path.dirname(nodeTempEntry), { recursive: true });
-  
+
   const entryPath = path
     .relative(
       path.join(cwd, '.testious'),
       path.join(cwd, config.nodeTestEntry ?? 'node'),
     )
     .replace(/\\/g, '/');
-  
+
   fs.writeFileSync(
     nodeTempEntry,
-    `${config.nodeTestEntry ? `import "${entryPath}";` : ""}
+    `${config.nodeTestEntry ? `import "${entryPath}";` : ''}
       import { allGroup } from 'testious';
       import { NodeRunner } from 'testious-node-runner';
       function runTest() {
         NodeRunner.run(allGroup());
       }
       runTest();
-    `.split('\n').map(line => line.trimStart()).join('\n')
+    `
+      .split('\n')
+      .map((line) => line.trimStart())
+      .join('\n'),
   );
-  
 }
 
-export async function run(options: RunOptions): Promise < void > {
+export async function run(options: RunOptions): Promise<void> {
   console.log('[Testious CLI]: Running test ...');
-  const config = readJSON < Config > (path.join(cwd, './testious.config.json'));
-  
+  let config: Config;
+  try {
+    config = readJSON<Config>(path.join(cwd, './testious.config.json'));
+  } catch (err: any) {
+    console.error('[Testious CLI]: Error when read config file');
+    console.error(err);
+    return;
+  }
+
   let nodeBundleDist = path.join(cwd, '.testious/dist/node.runner.js');
   let browserBundleDist = path.join(cwd, '.testious/dist/browser.runner.js');
-  
+
   if (options.bundle) {
     console.log('[Testious CLI]: Preparing assets ...');
     await createBrowserBundle(config);
@@ -105,10 +117,10 @@ export async function run(options: RunOptions): Promise < void > {
       cwd: path.join(cwd, '.'),
     });
   }
-  
+
   console.clear();
   console.log('[Testious CLI]: Testing ...');
-  
+
   try {
     console.log('[Testious CLI]: Running Node-runner ...');
     await runCommand(`node ${nodeBundleDist}`, [], {
@@ -117,7 +129,7 @@ export async function run(options: RunOptions): Promise < void > {
   } catch (error: any) {
     console.error(`[Testious CLI] Error when running test`);
   }
-  
+
   if (options.browser) {
     console.log('\n[Testious CLI]: Running Browser-runner...');
     const source = readFile(browserBundleDist);
@@ -136,15 +148,16 @@ export async function run(options: RunOptions): Promise < void > {
         });
         return;
       }
-      
+
       res.writeHead(200, { 'Content-Type': 'text/html' });
       res.end(
         renderTemplateFromFile(
-          path.join(__dirname, '../data/client/runner.html.tmpl'), { source },
+          path.join(__dirname, '../data/client/runner.html.tmpl'),
+          { source },
         ),
       );
     });
-    
+
     server.listen(3030, () => {
       console.log(
         '[Testious CLI]: Client test running in http://localhost:3030',

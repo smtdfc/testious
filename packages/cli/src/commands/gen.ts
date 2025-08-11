@@ -15,7 +15,13 @@ const __dirname = dirname(__filename);
 const cwd = process.cwd();
 
 export function gen(itemType: string, name: string) {
-  const config = readJSON<Config>(path.join(cwd, './testious.config.json'));
+  let config: Config;
+  try {
+    config = readJSON<Config>(path.join(cwd, './testious.config.json'));
+  } catch (err: any) {
+    console.error('[Testious CLI]: Error when read config file');
+    console.error(err);
+  }
 
   if (itemType === 'group') {
     renderTemplateToFile(

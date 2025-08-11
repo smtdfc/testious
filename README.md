@@ -78,6 +78,11 @@ describe('Array utilities', (g) => {
 });
 ```
 
+Import into entry point file 
+```javascript
+import "./hello.test.js";
+```
+
 Finally, run test by command
 
 ```bash
