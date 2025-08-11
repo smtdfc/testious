@@ -1,9 +1,14 @@
 import { TestGroup, TestCase } from 'testious';
 
+export interface TestError{
+  message:string;
+  stack?:string;
+}
+
 export interface TestCaseResultDetail {
   time: number;
   status: 'success' | 'failed';
-  error: Error | null;
+  error: TestError | null;
   target:TestCase;
 }
 
@@ -40,7 +45,7 @@ export class TestReport {
       );
       if (c.error) {
         console.log(`    Error:`);
-        console.error(c.error);
+        console.error(c.error.message+`\n`+c.error.stack);
       }
     });
   }
@@ -68,7 +73,10 @@ export class BrowserRunner {
     report.cases.push({
       time,
       status: success ? 'success' : 'failed',
-      error,
+      error:{
+        message:error?.message ?? "Unknown Error",
+        stack:error?.stack ?? "{}"
+      },
       target:testCase,
     });
   }
