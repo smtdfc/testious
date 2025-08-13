@@ -21,6 +21,11 @@ export default {
     format: 'esm',
     sourcemap: !isProduction,
     banner: '#!/usr/bin/env node',
+    paths: {
+      'testious-server': !isProduction
+        ? '../../server/dist/index.js'
+        : 'testious-server',
+    },
   },
   plugins: [
     typescript({ tsconfig: './tsconfig.json' }),

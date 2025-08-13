@@ -22,10 +22,10 @@ npm install -g testious-cli
 testious init
 ```
 
-#### Generate test group
+#### Create test file
 
 ```bash
-testious gen group <name>
+testious create file <name>
 ```
 
 #### Run test

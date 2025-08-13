@@ -1,168 +1,144 @@
-import { spawn } from 'child_process';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
+import { RunCommandOption } from '../types/index.js';
 import {
-  TestReportPrinter,
-  FullReport,
-  renderTemplateFromFile,
-  readJSON,
-  writeFileJSON,
-  readFile,
+  Logger,
+  readConfig,
+  renderTemplateToFile,
+  dedent,
+  __dirname,
 } from '../helpers/index.js';
-import { Config } from '../types/index.js';
-import http from 'http';
+import path, { resolve } from 'path';
+import { spawn } from 'child_process';
+import { promises as fs } from 'fs';
+import { Server } from 'testious-server';
 import open from 'open';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 const cwd = process.cwd();
 
-interface RunOptions {
-  bundle?: boolean;
-  browser?: boolean;
-}
-
-function runCommand(
-  cmd: string,
-  args: string[] = [],
-  options: { cwd?: string } = {},
-): Promise<void> {
+function startRollup(): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn(cmd, args, {
-      stdio: 'inherit',
+    const child = spawn('rollup -c', {
       shell: true,
-      ...options,
+      stdio: 'inherit',
     });
 
+    child.on('error', reject);
     child.on('close', (code) => {
       if (code === 0) resolve();
-      else reject(0);
+      else reject(new Error(`Rollup process exited with code ${code}`));
     });
   });
 }
 
-async function createBrowserBundle(config: Config) {
-  const browserTempEntry = resolve(path.join(cwd, '.testious/browser.js'));
-  fs.mkdirSync(path.dirname(browserTempEntry), { recursive: true });
-  const entryPath = path
-    .relative(
-      path.join(cwd, '.testious'),
-      path.join(cwd, config.browserTestEntry ?? 'browser'),
-    )
-    .replace(/\\/g, '/');
-  fs.writeFileSync(
-    browserTempEntry,
-    `${config.browserTestEntry ? `import "${entryPath}";` : ''}
-      import { allGroup } from 'testious';
-      import { BrowserRunner } from 'testious-browser-runner';
-      function runTest() {
-        BrowserRunner.run(allGroup());
-      }
-      runTest();
-    `
-      .split('\n')
-      .map((line) => line.trimStart())
-      .join('\n'),
-  );
+function startNodeRunner(filePath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(`node --enable-source-maps ${filePath}`, {
+      shell: true,
+      stdio: 'inherit',
+    });
+
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`Node process exited with code ${code}`));
+    });
+  });
 }
 
-async function createNodeBundle(config: Config) {
-  const nodeTempEntry = resolve(path.join(cwd, '.testious/node.js'));
-  fs.mkdirSync(path.dirname(nodeTempEntry), { recursive: true });
+export async function run(options: RunCommandOption) {
+  const logger = new Logger('Testious CLI');
 
-  const entryPath = path
-    .relative(
-      path.join(cwd, '.testious'),
-      path.join(cwd, config.nodeTestEntry ?? 'node'),
-    )
-    .replace(/\\/g, '/');
+  logger.info('Reading configuration ...');
+  const config = await readConfig(cwd);
 
-  fs.writeFileSync(
-    nodeTempEntry,
-    `${config.nodeTestEntry ? `import "${entryPath}";` : ''}
-      import { allGroup } from 'testious';
-      import { NodeRunner } from 'testious-node-runner';
-      function runTest() {
-        NodeRunner.run(allGroup());
-      }
-      runTest();
-    `
-      .split('\n')
-      .map((line) => line.trimStart())
-      .join('\n'),
-  );
-}
-
-export async function run(options: RunOptions): Promise<void> {
-  console.log('[Testious CLI]: Running test ...');
-  let config: Config;
-  try {
-    config = readJSON<Config>(path.join(cwd, './testious.config.json'));
-  } catch (err: any) {
-    console.error('[Testious CLI]: Error when read config file');
-    console.error(err);
-    return;
-  }
-
-  let nodeBundleDist = path.join(cwd, '.testious/dist/node.runner.js');
-  let browserBundleDist = path.join(cwd, '.testious/dist/browser.runner.js');
+  const runnerFile: Record<string, string> = {
+    browser: path.join(cwd, '.testious/browser.js'),
+    node: path.join(cwd, '.testious/node.js'),
+  };
 
   if (options.bundle) {
-    console.log('[Testious CLI]: Preparing assets ...');
-    await createBrowserBundle(config);
-    await createNodeBundle(config);
-    await runCommand(`rollup -c`, [], {
-      cwd: path.join(cwd, '.'),
-    });
+    logger.info('Preparing assets ...');
+
+    if (
+      config.runners &&
+      config.runners.includes('browser') &&
+      config?.entry?.browser
+    ) {
+      const browserEntry = path.join(cwd, config.entry.browser);
+      const relativePath = path.relative(
+        path.join(cwd, '.testious'),
+        browserEntry,
+      );
+
+      const dir = path.dirname(runnerFile.browser);
+      await fs.mkdir(dir, { recursive: true });
+
+      await fs.writeFile(
+        runnerFile.browser,
+        dedent(`import "${relativePath}";
+         import {allGroup} from 'testious';
+         import {BrowserRunner} from 'testious-browser-runner';
+         BrowserRunner.run(allGroup());
+        `),
+        'utf-8',
+      );
+    } else {
+      const dir = path.dirname(runnerFile.browser);
+      await fs.mkdir(dir, { recursive: true });
+
+      await fs.writeFile(runnerFile.browser, dedent(''), 'utf-8');
+    }
+
+    if (
+      config.runners &&
+      config.runners.includes('node') &&
+      config?.entry?.node
+    ) {
+      const nodeEntry = path.join(cwd, config.entry.node);
+      const relativePath = path.relative(
+        path.join(cwd, '.testious'),
+        nodeEntry,
+      );
+
+      const dir = path.dirname(runnerFile.node);
+      await fs.mkdir(dir, { recursive: true });
+
+      await fs.writeFile(
+        runnerFile.node,
+        dedent(`import "${relativePath}";
+         import {allGroup} from 'testious';
+         import {NodeRunner} from 'testious-node-runner';
+         NodeRunner.run(allGroup());
+        `),
+        'utf-8',
+      );
+    } else {
+      const dir = path.dirname(runnerFile.node);
+      await fs.mkdir(dir, { recursive: true });
+
+      await fs.writeFile(runnerFile.node, dedent(''), 'utf-8');
+    }
+
+    await startRollup();
+    logger.success('Assets created successfully. ');
   }
 
   console.clear();
-  console.log('[Testious CLI]: Testing ...');
-
+  logger.info('Starting Runners ...');
   try {
-    console.log('[Testious CLI]: Running Node-runner ...');
-    await runCommand(`node ${nodeBundleDist}`, [], {
-      cwd: path.join(cwd, '.'),
-    });
-  } catch (error: any) {
-    console.error(`[Testious CLI] Error when running test`);
-  }
+    if (config.runners && config.runners.includes('node')) {
+      logger.info('Starting Node runner ...');
+      await startNodeRunner(path.join(cwd, '.testious/dist/node.runner.js'));
+    }
+  } catch (e) {}
 
-  if (options.browser) {
-    console.log('\n[Testious CLI]: Running Browser-runner...');
-    const source = readFile(browserBundleDist);
-    const server = http.createServer((req, res) => {
-      if (req.method === 'POST') {
-        let body = '';
-        req.on('data', (chunk) => {
-          body += chunk.toString();
-        });
-        req.on('end', () => {
-          let data = JSON.parse(body) as FullReport;
-          new TestReportPrinter(data).show();
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({}));
-          server.close(() => {});
-        });
-        return;
-      }
-
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(
-        renderTemplateFromFile(
-          path.join(__dirname, '../data/client/runner.html.tmpl'),
-          { source },
-        ),
-      );
-    });
-
-    server.listen(3030, () => {
-      console.log(
-        '[Testious CLI]: Client test running in http://localhost:3030',
-      );
-      open('http://localhost:3030');
+  if (config.runners && config.runners.includes('browser')) {
+    const port = config?.server?.port ?? 3030;
+    const addr = `http://localhost:${port}`;
+    const server = new Server(path.join(cwd, '.testious/dist'));
+    logger.info('Starting Testious server ...');
+    server.listen(port, () => {
+      logger.info(`Testious server listening on ${addr}`);
+      open(addr);
     });
   }
 }

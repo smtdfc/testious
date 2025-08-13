@@ -12,7 +12,9 @@
     "declaration": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "paths": {}
+    "paths": {
+      "testious-server": ["../server/dist/index.d.ts"]
+    }
   },
   "include": ["./src", "./src/global.d.ts"]
 }

@@ -1,4 +1,2 @@
-export interface Config {
-  browserTestEntry?: string;
-  nodeTestEntry?: string;
-}
+export * from './config.js';
+export * from './commands.js';
