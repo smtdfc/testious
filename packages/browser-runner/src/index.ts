@@ -2,20 +2,19 @@ import { TestGroup, TestCase } from 'testious';
 
 declare global {
   interface Window {
-    TESTIOUS_DISPLAY_HELPER ? : any;
+    TESTIOUS_DISPLAY_HELPER?: any;
   }
 }
-
 
 const HELPER = window.TESTIOUS_DISPLAY_HELPER as any;
 export interface TestError {
   message: string;
-  stack ? : string;
+  stack?: string;
 }
 
 export interface TestCaseResultDetail {
   time: number;
-  status: 'success' | 'failed';
+  status: 'passed' | 'failed';
   error: TestError | null;
   target: TestCase;
 }
@@ -25,24 +24,24 @@ export class TestReport {
   private start: number = 0;
   private end: number = 0;
   public time: number = 0;
-  public id: string = (Math.floor(Math.random() * 1000) * Date.now()).toString(32);
+  public id: string = (Math.floor(Math.random() * 1000) * Date.now()).toString(
+    32,
+  );
   constructor(public group: TestGroup) {}
-  
+
   markStart() {
     this.start = performance.now();
   }
-  
+
   markEnd() {
     this.end = performance.now();
     this.time = this.end - this.start;
   }
-  
+
   show() {
     console.log(`Test Group: ${this.group.description}`);
     console.log(`Total Cases: ${this.cases.length}`);
-    const successCount = this.cases.filter(
-      (c) => c.status === 'success',
-    ).length;
+    const successCount = this.cases.filter((c) => c.status === 'passed').length;
     const failedCount = this.cases.length - successCount;
     console.log(`Success: ${successCount} | Failed: ${failedCount}`);
     console.log(`Total Time: ${this.time.toFixed(2)} ms`);
@@ -62,45 +61,36 @@ export class TestReport {
 export class BrowserRunner {
   static totalSuccess = 0;
   static totalFail = 0;
-  
+
   private static async runCase(testCase: TestCase, report: TestReport) {
     let start = performance.now();
-    let success = false;
+    let passed = false;
     let error: Error | null = null;
     let caseID = (Math.floor(Math.random() * 1000) * Date.now()).toString(32);
-    HELPER.addCase(
-      report.id,
-      caseID,
-      testCase.description,
-      "RUNNING"
-    );
+    HELPER.addCase(report.id, caseID, testCase.description, 'RUNNING');
     try {
       await testCase.fn();
-      success = true;
+      passed = true;
     } catch (e: any) {
       error = e as Error;
-      success = false;
+      passed = false;
     }
-    
+
     let end = performance.now();
     let time = end - start;
-    HELPER.updateCaseStatus(
-      report.id,
-      caseID,
-      success ? 'success' : 'failed',
-    );
-    
+    HELPER.updateCaseStatus(report.id, caseID, passed ? 'passed' : 'failed');
+
     report.cases.push({
       time,
-      status: success ? 'success' : 'failed',
+      status: passed ? 'passed' : 'failed',
       error: error && {
-        message: error?.message ?? "Unknown Error",
-        stack: error?.stack ?? "{}"
+        message: error?.message ?? 'Unknown Error',
+        stack: error?.stack ?? '{}',
       },
       target: testCase,
     });
   }
-  
+
   static async run(groups: TestGroup[]) {
     let reports: TestReport[] = [];
     let start = performance.now();
