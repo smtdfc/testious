@@ -41,9 +41,9 @@ export class TestReport {
   show() {
     console.log(`Test Group: ${this.group.description}`);
     console.log(`Total Cases: ${this.cases.length}`);
-    const successCount = this.cases.filter((c) => c.status === 'passed').length;
-    const failedCount = this.cases.length - successCount;
-    console.log(`Success: ${successCount} | Failed: ${failedCount}`);
+    const passedCount = this.cases.filter((c) => c.status === 'passed').length;
+    const failedCount = this.cases.length - passedCount;
+    console.log(`Passed: ${passedCount} | Failed: ${failedCount}`);
     console.log(`Total Time: ${this.time.toFixed(2)} ms`);
     console.log('Details:');
     this.cases.forEach((c, i) => {
@@ -59,7 +59,7 @@ export class TestReport {
 }
 
 export class BrowserRunner {
-  static totalSuccess = 0;
+  static totalPassed = 0;
   static totalFail = 0;
 
   private static async runCase(testCase: TestCase, report: TestReport) {
