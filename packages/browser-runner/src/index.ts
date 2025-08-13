@@ -1,5 +1,13 @@
 import { TestGroup, TestCase } from 'testious';
 
+declare global {
+  interface Window {
+    TESTIOUS_DISPLAY_HELPER ? : any;
+  }
+}
+
+
+const HELPER = window.TESTIOUS_DISPLAY_HELPER as any;
 export interface TestError {
   message: string;
   stack ? : string;
@@ -17,7 +25,7 @@ export class TestReport {
   private start: number = 0;
   private end: number = 0;
   public time: number = 0;
-  
+  public id: string = (Math.floor(Math.random() * 1000) * Date.now()).toString(32);
   constructor(public group: TestGroup) {}
   
   markStart() {
@@ -59,7 +67,13 @@ export class BrowserRunner {
     let start = performance.now();
     let success = false;
     let error: Error | null = null;
-    
+    let caseID = (Math.floor(Math.random() * 1000) * Date.now()).toString(32);
+    HELPER.addCase(
+      report.id,
+      caseID,
+      testCase.description,
+      "RUNNING"
+    );
     try {
       await testCase.fn();
       success = true;
@@ -70,6 +84,12 @@ export class BrowserRunner {
     
     let end = performance.now();
     let time = end - start;
+    HELPER.updateCaseStatus(
+      report.id,
+      caseID,
+      success ? 'success' : 'failed',
+    );
+    
     report.cases.push({
       time,
       status: success ? 'success' : 'failed',
@@ -87,6 +107,7 @@ export class BrowserRunner {
     for (let i = 0; i < groups.length; i++) {
       let cases = groups[i].cases;
       let report = new TestReport(groups[i]);
+      HELPER.addGroup(report.id, groups[i].description);
       report.markStart();
       for (let j = 0; j < cases.length; j++) {
         await this.runCase(cases[j], report);
