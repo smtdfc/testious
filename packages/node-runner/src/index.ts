@@ -5,7 +5,7 @@ import chalk from 'chalk';
 
 export interface TestCaseResultDetail {
   time: number;
-  status: 'success' | 'failed';
+  status: 'passed' | 'failed';
   error: Error | null;
   target: TestCase;
 }
@@ -29,7 +29,7 @@ export class TestReport {
   
   show() {
     
-    const successCount = this.cases.filter(c => c.status === 'success').length;
+    const successCount = this.cases.filter(c => c.status === 'passed').length;
     const failedCount = this.cases.length - successCount;
     
     console.log("");
@@ -38,7 +38,7 @@ export class TestReport {
     console.log(chalk.gray("──────────────────────────────────────────────"));
     
     console.log(chalk.white(" Total Cases : ") + chalk.yellow(`${this.cases.length}`));
-    console.log(chalk.white(" Success     : ") + chalk.green(`${successCount}`));
+    console.log(chalk.white(" Passed     : ") + chalk.green(`${successCount}`));
     console.log(chalk.white(" Failed      : ") + (failedCount > 0 ? chalk.red(`${failedCount}`) : chalk.gray(`${failedCount}`)));
     console.log(chalk.white(" Total Time  : ") + chalk.magenta(`${this.time.toFixed(2)} ms`));
     
@@ -46,8 +46,8 @@ export class TestReport {
     console.log(chalk.white.bold(" Details:"));
     
     this.cases.forEach((c, i) => {
-      const statusColor = c.status === 'success' ? chalk.green : chalk.red;
-      const statusIcon = c.status === 'success' ? '✅' : '❌';
+      const statusColor = c.status === 'passed' ? chalk.green : chalk.red;
+      const statusIcon = c.status === 'passed' ? '✅' : '❌';
       const shortDesc = c.target.description.length > 50 ?
         c.target.description.slice(0, 47) + "..." :
         c.target.description;
@@ -75,23 +75,23 @@ export class NodeRunner {
   
   private static async runCase(testCase: TestCase, report: TestReport) {
     let start = performance.now();
-    let success = false;
+    let passed = false;
     let error: Error | null = null;
     
     try {
       await testCase.fn();
-      success = true;
+      passed = true;
     } catch (e: any) {
       error = e as Error;
       console.error(e);
-      success = false;
+      passed = false;
     }
     
     let end = performance.now();
     let time = end - start;
     report.cases.push({
       time,
-      status: success ? 'success' : 'failed',
+      status: passed ? 'passed' : 'failed',
       error,
       target: testCase,
     });
