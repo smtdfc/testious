@@ -33,17 +33,41 @@ export class Server {
       let filePath: string;
       
       if (req.url === '/') {
-        filePath = this.indexFile; 
+        filePath = this.indexFile;
       } else {
         filePath = path.join(this.folder, req.url || '');
       }
       
       const data = await fs.readFile(filePath);
-      res.writeHead(200);
+      const contentType = this.getContentType(filePath);
+      res.writeHead(200, { 'Content-Type': contentType });
       res.end(data);
     } catch {
       res.writeHead(404);
       res.end('File not found');
+    }
+  }
+  
+  private getContentType(filePath: string) {
+    const ext = path.extname(filePath).toLowerCase();
+    switch (ext) {
+      case '.html':
+        return 'text/html; charset=utf-8';
+      case '.js':
+        return 'text/javascript; charset=utf-8';
+      case '.css':
+        return 'text/css; charset=utf-8';
+      case '.json':
+        return 'application/json; charset=utf-8';
+      case '.png':
+        return 'image/png';
+      case '.jpg':
+      case '.jpeg':
+        return 'image/jpeg';
+      case '.ico':
+        return 'image/x-icon';
+      default:
+        return 'application/octet-stream';
     }
   }
   
@@ -55,4 +79,3 @@ export class Server {
     this.server.close(callback);
   }
 }
-
