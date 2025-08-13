@@ -1,11 +1,13 @@
 import { TestGroup, TestCase } from 'testious';
 import { performance } from 'perf_hooks';
+import chalk from 'chalk';
+
 
 export interface TestCaseResultDetail {
   time: number;
   status: 'success' | 'failed';
   error: Error | null;
-  target:TestCase;
+  target: TestCase;
 }
 
 export class TestReport {
@@ -13,49 +15,69 @@ export class TestReport {
   private start: number = 0;
   private end: number = 0;
   public time: number = 0;
-
+  
   constructor(public group: TestGroup) {}
-
+  
   markStart() {
     this.start = performance.now();
   }
-
+  
   markEnd() {
     this.end = performance.now();
     this.time = this.end - this.start;
   }
-
+  
   show() {
-    console.log(`Test Group: ${this.group.description}`);
-    console.log(`Total Cases: ${this.cases.length}`);
-    const successCount = this.cases.filter(
-      (c) => c.status === 'success',
-    ).length;
+    
+    const successCount = this.cases.filter(c => c.status === 'success').length;
     const failedCount = this.cases.length - successCount;
-    console.log(`Success: ${successCount} | Failed: ${failedCount}`);
-    console.log(`Total Time: ${this.time.toFixed(2)} ms`);
-    console.log('Details:');
+    
+    console.log("");
+    console.log(chalk.bgCyan.black.bold("  Test Report  "));
+    console.log(chalk.white(" Group: ") + chalk.yellow(this.group.description));
+    console.log(chalk.gray("──────────────────────────────────────────────"));
+    
+    console.log(chalk.white(" Total Cases : ") + chalk.yellow(`${this.cases.length}`));
+    console.log(chalk.white(" Success     : ") + chalk.green(`${successCount}`));
+    console.log(chalk.white(" Failed      : ") + (failedCount > 0 ? chalk.red(`${failedCount}`) : chalk.gray(`${failedCount}`)));
+    console.log(chalk.white(" Total Time  : ") + chalk.magenta(`${this.time.toFixed(2)} ms`));
+    
+    console.log(chalk.gray("──────────────────────────────────────────────"));
+    console.log(chalk.white.bold(" Details:"));
+    
     this.cases.forEach((c, i) => {
+      const statusColor = c.status === 'success' ? chalk.green : chalk.red;
+      const statusIcon = c.status === 'success' ? '✅' : '❌';
+      const shortDesc = c.target.description.length > 50 ?
+        c.target.description.slice(0, 47) + "..." :
+        c.target.description;
+      
       console.log(
-        `  Case #${i + 1}:${c.target.description} -> ${status.toUpperCase()} (Time: ${c.time.toFixed(2)} ms)`,
+        `  ${chalk.gray(`#${i + 1}`)} ${statusIcon} ${chalk.white(shortDesc)} ` +
+        chalk.gray(`(Time: ${c.time.toFixed(2)} ms)`) +
+        ` → ` + statusColor(c.status.toUpperCase())
       );
+      
       if (c.error) {
-        console.log(`    Error:`);
+        console.log(chalk.red("      Error:"));
         console.error(c.error);
       }
     });
+    
+    console.log(chalk.gray("──────────────────────────────────────────────"));
+    console.log("");
   }
 }
 
 export class NodeRunner {
   static totalSuccess = 0;
   static totalFail = 0;
-
+  
   private static async runCase(testCase: TestCase, report: TestReport) {
     let start = performance.now();
     let success = false;
     let error: Error | null = null;
-
+    
     try {
       await testCase.fn();
       success = true;
@@ -64,17 +86,17 @@ export class NodeRunner {
       console.error(e);
       success = false;
     }
-
+    
     let end = performance.now();
     let time = end - start;
     report.cases.push({
       time,
       status: success ? 'success' : 'failed',
       error,
-      target:testCase,
+      target: testCase,
     });
   }
-
+  
   static async run(groups: TestGroup[]) {
     let start = performance.now();
     for (let i = 0; i < groups.length; i++) {
