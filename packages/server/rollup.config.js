@@ -6,13 +6,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 export default {
   input: 'src/index.ts',
-  external: [
-    'http',
-    'path',
-    'child_process',
-    'fs',
-    'url',
-  ],
+  external: ['http', 'path', 'child_process', 'fs', 'url'],
   output: {
     file: './dist/index.js',
     format: 'esm',

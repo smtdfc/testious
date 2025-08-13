@@ -1,6 +1,6 @@
 {
   "name": "testious-server",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Lightweight HTTP server for the Testious framework, enabling test result collection, static file serving, and seamless browser-based test execution",
   "license": "MIT",
   "author": "smtdfc <me.smtdfc@gmail.com>",
