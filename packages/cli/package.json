@@ -1,6 +1,6 @@
 {
   "name": "testious-cli",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Provides the shared config types for Testious CLI, loader, and other tooling.",
   "license": "MIT",
   "author": "smtdfc <me.smtdfc@gmail.com>",
