@@ -39,18 +39,9 @@ mkdir test && cd test
 tesious init
 ```
 
-#### Create test entrypoint
+#### Create test
 
-Create a `node/index.node.test.js` file and add it to the `testious.config.json` file
-
-```json
-{
-  "node": "*.node.test.js",
-  "browser": "*.browser.test.js"
-}
-```
-
-Edit in `node/index.node.test.js`:
+Create a `node/index.node.test.js` and edit:
 
 ```javascript
 import { test, expect } from 'testious';
