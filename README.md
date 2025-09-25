@@ -41,30 +41,21 @@ tesious init
 
 #### Create test entrypoint
 
-Create a `node/index.js` file and add it to the `testious.config.json` file
+Create a `node/index.node.test.js` file and add it to the `testious.config.json` file
 
 ```json
 {
-  "nodeTestEntry": "node/index.js"
+  "node": "*.node.test.js",
+  "browser": "*.browser.test.js"
 }
 ```
 
-_Note_: All test groups need to be imported to `node/index.js` file so that testious runner can run correctly.
-
-#### Create test group
-
-Use this command:
-
-```bash
-testious gen group node/hello
-```
-
-After running, testious-cli will generate the file `node/hello.test.js`. Open that file and edit as follows:
+Edit in `node/index.node.test.js`:
 
 ```javascript
-import { describe, expect } from 'testious';
+import { test, expect } from 'testious';
 
-describe('Array utilities', (g) => {
+test('Array utilities', (g) => {
   g.it('should correctly find the length of an array', () => {
     const arr = [1, 2, 3];
     expect(arr.length).toBe(3);
@@ -78,15 +69,10 @@ describe('Array utilities', (g) => {
 });
 ```
 
-Import into entry point file 
-```javascript
-import "./hello.test.js";
-```
-
 Finally, run test by command
 
 ```bash
-testious run --bundle
+testious run --node
 ```
 
 ---
