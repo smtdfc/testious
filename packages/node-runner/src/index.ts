@@ -1,116 +1,46 @@
-import { TestGroup, TestCase } from 'testious';
-import { performance } from 'perf_hooks';
-import chalk from 'chalk';
-
-
-export interface TestCaseResultDetail {
-  time: number;
-  status: 'passed' | 'failed';
-  error: Error | null;
-  target: TestCase;
-}
-
-export class TestReport {
-  public cases: TestCaseResultDetail[] = [];
-  private start: number = 0;
-  private end: number = 0;
-  public time: number = 0;
-  
-  constructor(public group: TestGroup) {}
-  
-  markStart() {
-    this.start = performance.now();
-  }
-  
-  markEnd() {
-    this.end = performance.now();
-    this.time = this.end - this.start;
-  }
-  
-  show() {
-    
-    const successCount = this.cases.filter(c => c.status === 'passed').length;
-    const failedCount = this.cases.length - successCount;
-    
-    console.log("");
-    console.log(chalk.bgCyan.black.bold("  Test Report  "));
-    console.log(chalk.white(" Group: ") + chalk.yellow(this.group.description));
-    console.log(chalk.gray("──────────────────────────────────────────────"));
-    
-    console.log(chalk.white(" Total Cases : ") + chalk.yellow(`${this.cases.length}`));
-    console.log(chalk.white(" Passed     : ") + chalk.green(`${successCount}`));
-    console.log(chalk.white(" Failed      : ") + (failedCount > 0 ? chalk.red(`${failedCount}`) : chalk.gray(`${failedCount}`)));
-    console.log(chalk.white(" Total Time  : ") + chalk.magenta(`${this.time.toFixed(2)} ms`));
-    
-    console.log(chalk.gray("──────────────────────────────────────────────"));
-    console.log(chalk.white.bold(" Details:"));
-    
-    this.cases.forEach((c, i) => {
-      const statusColor = c.status === 'passed' ? chalk.green : chalk.red;
-      const statusIcon = c.status === 'passed' ? '✅' : '❌';
-      const shortDesc = c.target.description.length > 50 ?
-        c.target.description.slice(0, 47) + "..." :
-        c.target.description;
-      
-      console.log(
-        `  ${chalk.gray(`#${i + 1}`)} ${statusIcon} ${chalk.white(shortDesc)} ` +
-        chalk.gray(`(Time: ${c.time.toFixed(2)} ms)`) +
-        ` → ` + statusColor(c.status.toUpperCase())
-      );
-      
-      if (c.error) {
-        console.log(chalk.red("      Error:"));
-        console.error(c.error);
-      }
-    });
-    
-    console.log(chalk.gray("──────────────────────────────────────────────"));
-    console.log("");
-  }
-}
+import { ALL_GROUP, TestGroup, TestRecord, TestReport } from 'testious';
 
 export class NodeRunner {
-  static totalSuccess = 0;
-  static totalFail = 0;
-  
-  private static async runCase(testCase: TestCase, report: TestReport) {
-    let start = performance.now();
-    let passed = false;
-    let error: Error | null = null;
-    
-    try {
-      await testCase.fn();
-      passed = true;
-    } catch (e: any) {
-      error = e as Error;
-      console.error(e);
-      passed = false;
-    }
-    
-    let end = performance.now();
-    let time = end - start;
-    report.cases.push({
-      time,
-      status: passed ? 'passed' : 'failed',
-      error,
-      target: testCase,
-    });
-  }
-  
-  static async run(groups: TestGroup[]) {
-    let start = performance.now();
-    for (let i = 0; i < groups.length; i++) {
-      let cases = groups[i].cases;
-      let report = new TestReport(groups[i]);
-      report.markStart();
-      for (let j = 0; j < cases.length; j++) {
-        await this.runCase(cases[j], report);
+  static async runGroup(group: TestGroup): Promise<TestReport> {
+    let report = new TestReport(group.id, group.description);
+    for (let i = 0; i < group.cases.length; i++) {
+      let caseInfo = group.cases[i]!;
+
+      let record: TestRecord = {
+        id: caseInfo.id,
+        case: caseInfo,
+        description: caseInfo.description,
+        time: 0,
+        status: 'skip',
+      };
+
+      try {
+        const start = process.hrtime.bigint();
+        await caseInfo.cb();
+        const end = process.hrtime.bigint();
+        record.status = 'pass';
+        record.time = Number(end - start) / 1_000_000; // ns -> ms
+      } catch (error: any) {
+        record.status = 'fail';
+        record.error = {
+          message: error.message,
+          stack: error.stack,
+        };
+        ``;
       }
-      report.markEnd();
-      report.show();
+
+      report.addRecord(record);
     }
-    let end = performance.now();
-    let time = end - start;
-    console.log(`All test run in ${time.toFixed(2)}ms`);
+
+    return report;
+  }
+
+  static async runAll(): Promise<TestReport[]> {
+    let reports: TestReport[] = [];
+    for (let i = 0; i < ALL_GROUP.length; i++) {
+      reports.push(await this.runGroup(ALL_GROUP[i]));
+    }
+
+    return reports;
   }
 }

@@ -1,0 +1,52 @@
+{
+  "name": "testious-config",
+  "version": "0.0.1",
+  "description": "Provides the shared config types for Testious CLI, loader, and other tooling.",
+  "license": "MIT",
+  "author": "smtdfc <me.smtdfc@gmail.com>",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist/",
+    "lib/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build:prod": "cross-env NODE_ENV=production rollup -c",
+    "build:dev": "cross-env NODE_ENV=development rollup -c",
+    "clean": "shx rm -rf dist",
+    "prepublishOnly": "shx cp ../../LICENSE . && npm run clean && npm run build:prod"
+  },
+  "keywords": [
+    "framework",
+    "testing",
+    "nodejs",
+    "browser"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smtdfc/testious.git"
+  },
+  "bugs": {
+    "url": "https://github.com/smtdfc/testious/issues"
+  },
+  "homepage": "https://github.com/smtdfc/testious/tree/main/packages/config#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "testious": "workspace:*"
+  },
+  "devDependencies": {}
+}

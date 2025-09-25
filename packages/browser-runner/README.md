@@ -1,11 +1,11 @@
-# Testious Browser Runner
+# Testious Node Runner
 
-testious-browser-runner is a browser-based test runner for the Testious framework, enabling seamless execution and management of tests directly in web environments
+testious-node-runner is a Node.js test runner for the Testious framework, facilitating efficient test execution and management within Node.js environments.
 
 ### Installation
 
 ```bash
-npm install -g testious-browser-runner
+npm install -g testious-node-runner
 ```
 
 ### Support

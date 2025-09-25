@@ -1,26 +1,29 @@
-import { cac } from 'cac';
-import * as commands from './commands/index.js';
-import { InitCommandOption, RunCommandOption } from './types/index.js';
+#!/usr/bin/env node
 
-const cli = cac('testious');
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
+import { init, run } from './commands';
 
-cli
-  .command('init', 'Create new test ')
-  .option('--no-install', 'Do not automatically install packages using npm')
-  .action((options: InitCommandOption) => commands.init(options));
-
-cli
-  .command('create <type> <value>', 'Create item  ')
-  .action((_type: string, value: string) => commands.create(_type, value));
-
-cli
-  .command('run', 'Run test ')
-  .option('--browser', 'Run test on browser')
-  .option('--bundle', 'Bundle asset with bundler')
-  .action((options: RunCommandOption) => commands.run(options));
-
-cli.parse();
-
-if (!cli.matchedCommand) {
-  cli.outputHelp();
-}
+yargs()
+  .scriptName('testious')
+  .usage('$0 <cmd> [args]')
+  .command('init', 'Init testious project', init)
+  .command(
+    'run',
+    'Scan and run all test file',
+    {
+      node: {
+        type: 'boolean',
+        describe: 'Run on Node Runner',
+        default: false,
+      },
+      browser: {
+        type: 'boolean',
+        describe: 'Run on Browser Runner',
+        default: false,
+      },
+    },
+    run,
+  )
+  .help()
+  .parse(hideBin(process.argv));

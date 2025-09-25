@@ -1,6 +1,6 @@
 {
   "name": "testious",
-  "version": "1.0.1",
+  "version": "1.2.0",
   "description": "A simple and extensible testing framework designed to provide a clean and efficient way to write and run tests.",
   "license": "MIT",
   "author": "smtdfc <me.smtdfc@gmail.com>",
@@ -18,21 +18,21 @@
   },
   "files": [
     "dist/",
-    "data/",
     "lib/",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "build:prod": "NODE_ENV=production rollup -c",
-    "build:dev": "NODE_ENV=development rollup -c",
-    "clean": "rm -rf dist",
-    "prepublishOnly": "cp ../../LICENSE . && cp ../../README.md . && npm run clean && npm run build:prod"
+    "build:prod": "cross-env NODE_ENV=production rollup -c",
+    "build:dev": "cross-env NODE_ENV=development rollup -c",
+    "clean": "shx rm -rf dist",
+    "prepublishOnly": "shx cp ../../LICENSE . && npm run clean && npm run build:prod"
   },
   "keywords": [
     "framework",
-    "testious",
-    "testing"
+    "testing",
+    "nodejs",
+    "browser"
   ],
   "repository": {
     "type": "git",
@@ -45,5 +45,5 @@
   "engines": {
     "node": ">=18"
   },
-  "sideEffects": false
+  "devDependencies": {}
 }

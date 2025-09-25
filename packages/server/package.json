@@ -1,15 +1,12 @@
 {
   "name": "testious-server",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Lightweight HTTP server for the Testious framework, enabling test result collection, static file serving, and seamless browser-based test execution",
   "license": "MIT",
   "author": "smtdfc <me.smtdfc@gmail.com>",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": {
-    "testious": "dist/index.js"
-  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -20,22 +17,23 @@
     "access": "public"
   },
   "files": [
-    "dist/",
     "data/",
+    "dist/",
     "lib/",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "build:prod": "NODE_ENV=production rollup -c",
-    "build:dev": "NODE_ENV=development rollup -c",
-    "clean": "rm -rf dist",
-    "prepublishOnly": "cp ../../LICENSE . && npm run clean && npm run build:prod"
+    "build:prod": "cross-env NODE_ENV=production rollup -c",
+    "build:dev": "cross-env NODE_ENV=development rollup -c",
+    "clean": "shx rm -rf dist",
+    "prepublishOnly": "shx cp ../../LICENSE . && npm run clean && npm run build:prod"
   },
   "keywords": [
     "framework",
-    "testious",
-    "cli"
+    "testing",
+    "nodejs",
+    "browser"
   ],
   "repository": {
     "type": "git",
@@ -44,18 +42,15 @@
   "bugs": {
     "url": "https://github.com/smtdfc/testious/issues"
   },
-  "homepage": "https://github.com/smtdfc/testious/tree/main/packages/cli#readme",
+  "homepage": "https://github.com/smtdfc/testious/tree/main/packages/server#readme",
   "engines": {
     "node": ">=18"
   },
-  "sideEffects": false,
   "dependencies": {
-    "@rollup/plugin-commonjs": "^28.0.6",
-    "@rollup/plugin-node-resolve": "^16.0.1",
-    "cac": "^6.7.14",
-    "chalk": "^5.5.0",
-    "log-symbols": "^7.0.1",
-    "open": "^10.2.0",
-    "rollup": "^3.29.5"
+    "express": "^5.1.0",
+    "testious": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3"
   }
 }

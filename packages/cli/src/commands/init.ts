@@ -1,47 +1,25 @@
-import { InitCommandOption } from '../types/index.js';
-import { Logger, copyDir, __dirname } from '../helpers/index.js';
-import path, { resolve } from 'path';
-import { spawn } from 'child_process';
-import { promisify } from 'util';
+import path from 'path';
+import { cpSync } from 'fs';
+import { resolve } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-function installDeps(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(
-      'npm',
-      [
-        'i',
-        'testious',
-        'testious-node-runner',
-        'rollup',
-        '@rollup/plugin-commonjs',
-        '@rollup/plugin-node-resolve',
-        '-D',
-      ],
-      {
-        shell: true,
-        stdio: 'inherit',
-      },
-    );
-
-    child.on('error', reject);
-    child.on('close', (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`Install process exited with code ${code}`));
-    });
-  });
-}
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const cwd = process.cwd();
 
-export async function init(options: InitCommandOption) {
-  const logger = new Logger('Testious CLI');
-  logger.info('Setting up testious ...');
-  await copyDir(resolve(path.join(__dirname, '../data/test')), cwd);
+export function init(options: any) {
+  console.log('[Testious CLI]: Initializing project');
+  const from = resolve(path.join(__dirname, '../data/project'));
 
-  if (options.install) {
-    logger.info('Installing dependencies ...');
-    await installDeps();
-  }
+  const to = resolve(path.join(cwd));
 
-  logger.success('Successfully! Everything is ready to use. ');
+  cpSync(from, to, {
+    recursive: true,
+    force: true,
+    errorOnExist: false,
+  });
+
+  console.log('[Testious CLI]: Project created successfully');
 }

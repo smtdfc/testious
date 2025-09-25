@@ -1,0 +1,4 @@
+{
+  "node": "*.node.test.js",
+  "browser": "*.browser.test.js"
+}

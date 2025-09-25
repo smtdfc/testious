@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Testious</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <style>
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        box-sizing: border-box;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, 0.07);
+        justify-content: space-between;
+      }
+
+      .navbar-title {
+        margin: 0.5rem 0;
+      }
+
+      .navbar-btn {
+        background: transparent;
+        border-radius: 50%;
+        padding: 0.5rem;
+        border: none;
+        transition: all 0.3s ease;
+      }
+
+      .navbar-btn:hover {
+        background-color: rgba(0, 0, 0, 0.09);
+      }
+
+      .container {
+        margin-top: 6rem;
+        padding: 1rem;
+      }
+
+      .accordion {
+        margin-top: 10px;
+        border-radius: 10px;
+        box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, 0.07);
+      }
+
+      .accordion-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+      }
+
+      .accordion-title {
+        margin: 0;
+      }
+
+      .accordion-btn {
+        background: transparent;
+        border-radius: 50%;
+        padding: 0.5rem;
+        border: none;
+        transition: all 0.3s ease;
+      }
+
+      .accordion-btn:hover {
+        background-color: rgba(0, 0, 0, 0.09);
+      }
+
+      .accordion-body {
+        padding: 1rem;
+        display: none;
+        flex-flow: column;
+      }
+
+      .accordion.open .accordion-body {
+        display: flex;
+      }
+
+      .accordion.open .accordion-btn {
+        transform: rotate(180deg);
+      }
+
+      .case-info {
+        padding: 0.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-radius: 10px;
+      }
+
+      .case-info:hover {
+        background-color: rgba(0, 0, 0, 0.07);
+      }
+
+      .sub-text {
+        font-size: 12px;
+        color: gray;
+      }
+
+      .case-time {
+        display: flex;
+        align-items: center;
+        justify-self: center;
+        column-gap: 5px;
+      }
+
+      .pass {
+        font-size: 12px;
+        border-radius: 20px;
+        padding: 5px;
+        color: white;
+        background-color: green;
+        width: 40px;
+        text-align: center;
+      }
+
+      .fail {
+        display: block;
+        font-size: 12px;
+        border-radius: 20px;
+        padding: 5px;
+        color: white;
+        background-color: red;
+        min-width: 40px;
+        width: 40px !important;
+        text-align: center;
+      }
+    </style>
+
+    <div class="navbar">
+      <div class="navbar-header">
+        <h3 class="navbar-title">Testious</h3>
+      </div>
+      <div class="navbar-items">
+        <button class="navbar-btn material-symbols-outlined">menu</button>
+      </div>
+    </div>
+
+    <div class="container" id="container"></div>
+
+    <script>
+      class TestGroupDisplay {
+        constructor(title) {
+          this.element = document.createElement('div');
+          this.element.className = 'accordion';
+          this.element.innerHTML = `
+            <div class="accordion-header">
+              <h3 class="accordion-title">${title}</h3>
+              <button class="accordion-btn material-symbols-outlined">
+                keyboard_arrow_down
+              </button>
+            </div>
+            <div class="accordion-body"></div>
+          `;
+          this.body = this.element.querySelector('.accordion-body');
+          this.element
+            .querySelector('.accordion-header')
+            .addEventListener('click', () => {
+              this.element.classList.toggle('open');
+            });
+        }
+
+        attach(target) {
+          target.appendChild(this.element);
+        }
+
+        addCase(caseInfo) {
+          let element = document.createElement('span');
+          element.className = 'case-info';
+          element.innerHTML = `
+            <span>${caseInfo.title}</span>
+            <div class="case-time">
+              <span class="sub-text">${caseInfo.time}ms</span>
+              <span class="${
+                caseInfo.status
+              }">${caseInfo.status.toUpperCase()}</span>
+            </div>
+          `;
+
+          this.body.appendChild(element);
+        }
+      }
+
+      window.TESTIOUS = {
+        onDone: (results = []) => {
+          results.forEach((result) => {
+            console.log(result);
+
+            let test = new TestGroupDisplay(result.description);
+            test.attach(document.getElementById('container'));
+            result.records.forEach((record) => {
+              test.addCase({
+                title: record.description,
+                time: Number(record.time).toFixed(3),
+                status: record.status,
+              });
+            });
+          });
+        },
+      };
+    </script>
+    <script type="module" src="./assets/index.js"></script>
+  </body>
+</html>

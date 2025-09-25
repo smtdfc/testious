@@ -1,20 +1,7 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "outDir": "./dist",
-    "esModuleInterop": true,
-    "sourceMap": false,
-    "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "declaration": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "paths": {
-      "testious": ["../core/dist/index.d.ts"]
-    }
+    "outDir": "./dist"
   },
   "include": ["./src", "./src/global.d.ts"]
 }
